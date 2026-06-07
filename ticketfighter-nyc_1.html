@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TicketFighter NYC</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;--bg:#0e0f11;--bg2:#15171a;--bg3:#1c1f23;--bg4:#24282e;--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);--text:#f0ede8;--text2:#9a9690;--text3:#5e5c58;--red:#e24b4a;--red-soft:rgba(226,75,74,0.13);--red-border:rgba(226,75,74,0.32);--amber:#d4843c;--amber-soft:rgba(212,132,60,0.13);--blue:#4a8fd4;--blue-soft:rgba(74,143,212,0.13);--green:#4ea86b;--green-soft:rgba(78,168,107,0.13);--r:10px;--rs:6px}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:var(--font);cursor:pointer}
+input,select{font-family:var(--font)}
+a{text-decoration:none}
+
+/* ─ Layout ─ */
+#app{display:flex;height:100vh;overflow:hidden}
+#main{flex:1;overflow-y:auto;background:var(--bg)}
+.page{padding:24px;max-width:1080px}
+
+/* ─ Auth ─ */
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:var(--bg)}
+.auth-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
+.auth-glow{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(226,75,74,.09) 0%,transparent 70%);pointer-events:none}
+.auth-box{position:relative;background:var(--bg2);border:.5px solid var(--border2);border-radius:16px;padding:36px;width:420px;max-width:calc(100vw - 32px)}
+.auth-logo{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.auth-logo-icon{font-size:32px}
+.auth-logo-name{font-size:20px;font-weight:600}
+.auth-logo-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.auth-tabs{display:flex;background:var(--bg3);border-radius:var(--rs);padding:3px;margin-bottom:22px}
+.auth-tab{flex:1;padding:7px;border:none;background:none;border-radius:5px;color:var(--text2);font-size:13px;transition:.12s}
+.auth-tab.on{background:var(--bg4);color:var(--text);font-weight:500}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field label{font-size:12px;color:var(--text2);font-weight:500}
+.inp{background:var(--bg3);border:.5px solid var(--border2);border-radius:var(--rs);padding:9px 12px;color:var(--text);font-size:13px;outline:none;width:100%;transition:border-color .15s}
+.inp:focus{border-color:var(--red)}
+.btn-primary{width:100%;background:var(--red);color:#fff;border:none;border-radius:var(--rs);padding:11px;font-size:14px;font-weight:500;margin-top:6px;transition:opacity .15s}
+.btn-primary:hover{opacity:.88}
+.auth-stats{display:flex;justify-content:center;align-items:center;gap:20px;margin-top:24px;padding-top:20px;border-top:.5px solid var(--border)}
+.astat{text-align:center}
+.astat-val{font-size:16px;font-weight:600}
+.astat-lbl{font-size:10px;color:var(--text3);margin-top:2px}
+.adiv{width:.5px;height:28px;background:var(--border)}
+
+/* ─ Sidebar ─ */
+#sidebar{width:220px;min-width:220px;background:var(--bg2);border-right:.5px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow:hidden;transition:width .2s,min-width .2s;position:relative;z-index:10;flex-shrink:0}
+#sidebar.closed{width:54px;min-width:54px}
+.sb-top{display:flex;align-items:center;justify-content:space-between;padding:16px 12px 12px;border-bottom:.5px solid var(--border)}
+.sb-logo{display:flex;align-items:center;gap:8px;overflow:hidden}
+.sb-logo-icon{font-size:20px;flex-shrink:0}
+.sb-logo-text{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.sb-logo-name{font-size:14px;font-weight:600}
+.sb-badge{font-size:9px;background:var(--red);color:#fff;padding:2px 5px;border-radius:4px;font-weight:600;letter-spacing:.5px}
+.sb-toggle{background:none;border:.5px solid var(--border);color:var(--text3);width:22px;height:22px;border-radius:5px;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.12s}
+.sb-toggle:hover{border-color:var(--border2);color:var(--text2)}
+.sb-alert{margin:10px 10px 0;background:var(--red-soft);border:.5px solid var(--red-border);border-radius:var(--rs);padding:8px 10px;display:flex;align-items:flex-start;gap:6px;font-size:11px}
+.sb-alert-dot{width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:3px;animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 8px 0}
+.sb-section{margin-bottom:14px}
+.sb-section-lbl{font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:4px 8px 6px}
+.nav-btn{display:flex;align-items:center;gap:9px;width:100%;padding:7px 9px;border-radius:var(--rs);background:none;border:none;color:var(--text2);font-size:13px;text-align:left;transition:.12s;position:relative;white-space:nowrap;overflow:hidden}
+.nav-btn:hover{background:var(--bg3);color:var(--text)}
+.nav-btn.on{background:var(--bg3);color:var(--text);font-weight:500}
+.nav-btn.on::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:2px;height:16px;background:var(--red);border-radius:0 2px 2px 0}
+.nav-icon{font-size:15px;flex-shrink:0}
+.nav-lbl{flex:1}
+.nav-bdg{font-size:10px;background:var(--red);color:#fff;padding:1px 5px;border-radius:8px;font-weight:600}
+.sb-footer{padding:12px;border-top:.5px solid var(--border);margin-top:auto}
+.sb-vcard{display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:var(--rs);padding:8px 10px;margin-bottom:10px}
+.sb-vdot{width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0}
+.sb-vname{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-vsub{font-size:10px;color:var(--text3)}
+.sb-user{display:flex;align-items:center;gap:8px}
+.sb-avatar{width:28px;height:28px;border-radius:50%;background:var(--bg4);color:var(--text2);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-uname{font-size:12px;font-weight:500}
+.sb-uplan{font-size:10px;color:var(--text3)}
+
+/* ─ Shared ─ */
+.card{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:16px}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:13px;font-weight:500}
+.card-link{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer}
+.card-link:hover{color:var(--text2)}
+.btn{border:none;border-radius:var(--rs);padding:7px 14px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:opacity .12s;white-space:nowrap}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{opacity:.88}
+.btn-out{background:none;border:.5px solid var(--border2);color:var(--text)}
+.btn-out:hover{background:var(--bg3)}
+.banner-ok{background:var(--green-soft);border:.5px solid rgba(78,168,107,.3);color:var(--green);border-radius:var(--rs);padding:10px 14px;font-size:13px;margin-bottom:16px;font-weight:500}
+.banner-warn{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:var(--rs);margin-bottom:16px;font-size:13px;background:var(--red-soft);border:.5px solid var(--red-border)}
+.banner-warn .bw-body{flex:1}
+.banner-warn .bw-title{font-weight:500}
+.banner-warn .bw-loc{color:var(--text2);margin-left:6px}
+.banner-warn .bw-act{background:none;border:none;color:var(--red);font-size:12px;font-weight:500;cursor:pointer}
+.banner-warn .bw-x{background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer}
+
+/* ─ Dashboard ─ */
+.dash{padding:24px}
+.dash-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.dash-greet{font-size:22px;font-weight:600}
+.dash-date{font-size:13px;color:var(--text3);margin-top:3px}
+.asp-tag{color:var(--red);font-weight:500}
+.dash-hdr-r{display:flex;gap:10px}
+.dash-grid{display:grid;grid-template-columns:1fr 310px;gap:16px}
+.dash-col{display:flex;flex-direction:column}
+
+/* ─ Map ─ */
+.map-wrap{position:relative;background:#12151a;border-radius:var(--rs);overflow:hidden}
+.map-legend{position:absolute;bottom:10px;right:10px;background:rgba(21,23,26,.92);border:.5px solid var(--border);border-radius:var(--rs);padding:7px 10px;display:flex;flex-direction:column;gap:4px}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text2)}
+.leg-dot{width:7px;height:7px;border-radius:50%}
+
+/* ─ Vehicles ─ */
+.veh-row{display:flex;align-items:flex-start;gap:10px;padding:10px;background:var(--bg3);border-radius:var(--rs);border:.5px solid var(--border);margin-bottom:8px}
+.veh-row.high{border-color:var(--red-border)}
+.veh-icon{font-size:20px;flex-shrink:0}
+.veh-info{flex:1;min-width:0}
+.veh-name{font-size:13px;font-weight:500}
+.veh-plate{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:4px}
+.veh-loc{font-size:11px;color:var(--text3);margin-top:2px}
+.veh-warn{font-size:11px;color:var(--red);margin-top:3px;font-weight:500}
+.veh-debt{font-size:11px;color:var(--amber);margin-top:2px}
+.risk-tag{font-size:10px;font-weight:600;padding:3px 8px;border-radius:8px}
+.risk-high{background:var(--red-soft);color:var(--red)}
+.risk-low{background:var(--green-soft);color:var(--green)}
+
+/* ─ ASP ─ */
+.asp-row{display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--bg3);border-radius:var(--rs);border:.5px solid transparent;margin-bottom:6px}
+.asp-row.today{border-color:var(--red-border);background:var(--red-soft)}
+.asp-row.passed{opacity:.5}
+.asp-day{font-size:12px;font-weight:500;width:28px}
+.asp-bar-wrap{flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.asp-bar{height:100%;border-radius:2px;width:40%}
+.asp-time{font-size:11px;color:var(--text2);white-space:nowrap}
+.asp-sus{background:var(--blue-soft);border:.5px solid rgba(74,143,212,.2);border-radius:var(--rs);padding:10px;margin-top:4px}
+.asp-sus-lbl{font-size:10px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.sus-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2);padding:2px 0}
+.sus-name{flex:1;color:var(--text)}
+.sus-date{color:var(--text3);font-size:11px}
+
+/* ─ Stats ─ */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-card{background:var(--bg3);border-radius:var(--rs);padding:12px}
+.stat-icon{font-size:16px;margin-bottom:4px}
+.stat-val{font-size:22px;font-weight:600;line-height:1.2}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:2px}
+.stat-sub{font-size:10px;color:var(--text3)}
+
+/* ─ Debt ─ */
+.debt-val{font-size:28px;font-weight:600}
+.debt-of{font-size:12px;color:var(--text3)}
+.debt-track{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin:8px 0 10px}
+.debt-fill{height:100%;border-radius:3px;transition:width .5s}
+.debt-note{font-size:12px;color:var(--text3);line-height:1.5}
+
+/* ─ Activity ─ */
+.act-list{list-style:none;display:flex;flex-direction:column;gap:12px}
+.act-item{display:flex;align-items:flex-start;gap:10px}
+.act-ico{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px}
+.ico-alert{background:var(--red-soft);color:var(--red)}
+.ico-ok{background:var(--green-soft);color:var(--green)}
+.ico-rep{background:var(--blue-soft);color:var(--blue)}
+.ico-boot{background:var(--amber-soft);color:var(--amber)}
+.act-text{font-size:12px;line-height:1.5}
+.act-time{font-size:10px;color:var(--text3);margin-top:2px;display:block}
+
+/* ─ Map view ─ */
+.view-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:16px;flex-wrap:wrap}
+.view-title{font-size:20px;font-weight:600}
+.view-sub{font-size:13px;color:var(--text3);margin-top:3px}
+.view-hdr-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.map-layout{display:grid;grid-template-columns:1fr 260px;gap:16px}
+.map-full{border-radius:var(--r);border:.5px solid var(--border);background:#12151a;overflow:hidden}
+.filter-row{display:flex;background:var(--bg3);border-radius:var(--rs);padding:3px}
+.ftab{padding:5px 12px;border:none;background:none;border-radius:5px;color:var(--text2);font-size:12px;cursor:pointer;transition:.12s}
+.ftab.on{background:var(--bg4);color:var(--text);font-weight:500}
+.sight-panel{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);overflow:hidden}
+.sight-panel-hdr{padding:10px 14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);border-bottom:.5px solid var(--border)}
+.sight-empty{padding:24px 14px;font-size:13px;color:var(--text3);text-align:center}
+.sight-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:.5px solid var(--border)}
+.sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sdot.traffic{background:var(--red)}
+.sdot.marshal{background:var(--amber)}
+.sight-info{flex:1;min-width:0}
+.sight-block{font-size:12px;font-weight:500}
+.sight-meta{font-size:11px;color:var(--text3);margin-top:1px}
+.trust-pill{font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px}
+.trust-h{background:var(--green-soft);color:var(--green)}
+.trust-m{background:var(--amber-soft);color:var(--amber)}
+
+/* ─ Modal ─ */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px}
+.modal{background:var(--bg2);border:.5px solid var(--border2);border-radius:var(--r);padding:24px;width:480px;max-width:100%;max-height:90vh;overflow-y:auto}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.modal-title{font-size:16px;font-weight:600}
+.modal-x{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:2px}
+.modal-desc{font-size:13px;color:var(--text3);margin-bottom:18px;line-height:1.5}
+.modal-acts{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+.agent-type-btn{padding:10px 12px;border:.5px solid var(--border);border-radius:var(--rs);background:var(--bg3);color:var(--text);text-align:left;cursor:pointer;width:100%;margin-bottom:8px;transition:.12s}
+.agent-type-btn.on{border-color:var(--red);background:var(--red-soft)}
+.atype-lbl{display:block;font-size:13px;font-weight:500}
+.atype-sub{display:block;font-size:11px;color:var(--text3);margin-top:2px}
+.modal-lbl{display:block;font-size:12px;color:var(--text2);font-weight:500;margin-bottom:5px;margin-top:12px}
+.modal-loc{font-size:12px;color:var(--text2);margin:12px 0}
+
+/* ─ Ticket capture ─ */
+.stepper{display:flex;align-items:center;background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:24px;overflow-x:auto;gap:0}
+.step-item{display:flex;align-items:center;flex:1;min-width:0}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--bg4);color:var(--text3);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-item.on .step-num{background:var(--red);color:#fff}
+.step-item.done .step-num{background:var(--green);color:#fff}
+.step-lbl{font-size:11px;color:var(--text3);margin-left:6px;white-space:nowrap}
+.step-item.on .step-lbl{color:var(--text);font-weight:500}
+.step-item.done .step-lbl{color:var(--green)}
+.step-line{flex:1;height:.5px;background:var(--border);margin:0 8px;min-width:10px}
+.cap-body{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:24px}
+.cap-title{font-size:17px;font-weight:600;margin-bottom:8px}
+.cap-hint{font-size:13px;color:var(--text3);margin-bottom:20px;line-height:1.6}
+.drop-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1.5px dashed var(--border2);border-radius:var(--r);padding:40px;cursor:pointer;background:var(--bg3);transition:border-color .15s;text-align:center;width:100%}
+.drop-zone:hover{border-color:var(--red)}
+.drop-icon{font-size:36px;margin-bottom:10px}
+.drop-text{font-size:14px;font-weight:500}
+.drop-sub{font-size:12px;color:var(--text3);margin-top:4px}
+.sign-tip{font-size:12px;color:var(--text3);margin-top:6px}
+.ocr-banner{background:var(--blue-soft);border:.5px solid rgba(74,143,212,.3);color:var(--blue);border-radius:var(--rs);padding:10px 14px;font-size:13px;margin-bottom:16px}
+.ocr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.ocr-field label{font-size:11px;color:var(--text3);font-weight:500;display:block;margin-bottom:3px}
+.agent-match{background:var(--bg3);border:.5px solid var(--red-border);border-radius:var(--rs);padding:12px;margin-bottom:14px}
+.match-hdr{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--red);margin-bottom:7px}
+.match-name{font-size:13px;font-weight:500;margin-bottom:5px}
+.match-stats{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.dr-pill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;background:var(--red-soft);color:var(--red)}
+.match-stat{font-size:11px;color:var(--text3)}
+.match-warn{background:var(--red-soft);border:.5px solid var(--red-border);color:var(--red);border-radius:var(--rs);padding:7px 10px;font-size:12px;margin-top:8px}
+.flag-check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer;margin-bottom:8px}
+.flag-check input{accent-color:var(--red)}
+.letter-box{background:var(--bg3);border:.5px solid var(--border);border-radius:var(--rs);padding:16px;margin-bottom:14px;max-height:300px;overflow-y:auto}
+.letter-text{font-family:var(--mono);font-size:12px;color:var(--text2);white-space:pre-wrap;line-height:1.7}
+.letter-acts{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.letter-note{font-size:12px;color:var(--text3);line-height:1.5}
+
+/* ─ Agents ─ */
+.agent-layout{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+.sort-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.sort-lbl{font-size:11px;color:var(--text3)}
+.sort-btn{padding:5px 10px;border:.5px solid var(--border);border-radius:var(--rs);background:none;color:var(--text2);font-size:11px;cursor:pointer;transition:.12s}
+.sort-btn.on{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.srch{background:var(--bg3);border:.5px solid var(--border2);border-radius:var(--rs);padding:7px 12px;color:var(--text);font-size:13px;outline:none;width:200px}
+.srch:focus{border-color:var(--red)}
+.agent-card{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:12px;cursor:pointer;text-align:left;width:100%;margin-bottom:8px;transition:border-color .12s}
+.agent-card:hover{border-color:var(--border2)}
+.agent-card.on{border-color:var(--red)}
+.agent-card-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.ag-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;color:var(--text2)}
+.ag-name{font-size:13px;font-weight:500}
+.ag-badge{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.dis-pill{font-size:10px;font-weight:600;padding:3px 8px;border-radius:8px;white-space:nowrap}
+.dis-critical{background:var(--red-soft);color:var(--red)}
+.dis-high{background:var(--amber-soft);color:var(--amber)}
+.dis-low{background:var(--green-soft);color:var(--green)}
+.ag-stats{display:flex;gap:10px;flex-wrap:wrap}
+.ag-stat{font-size:11px;color:var(--text3)}
+.agent-detail{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:16px;position:sticky;top:16px}
+.ad-hdr{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.ad-av{width:44px;height:44px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--text2);flex-shrink:0}
+.ad-name{font-size:16px;font-weight:600}
+.ad-sub{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.verified{font-size:10px;font-weight:600;background:var(--green-soft);color:var(--green);padding:3px 8px;border-radius:8px;margin-left:auto}
+.ad-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.ad-stat{background:var(--bg3);border-radius:var(--rs);padding:10px}
+.ad-stat-val{font-size:18px;font-weight:600}
+.ad-stat-lbl{font-size:10px;color:var(--text3);margin-top:2px}
+.ad-sec{margin-bottom:14px}
+.ad-sec-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:7px}
+.patrol-tags{display:flex;flex-wrap:wrap;gap:5px}
+.ptag{font-size:11px;background:var(--bg3);border:.5px solid var(--border);border-radius:4px;padding:3px 8px;color:var(--text2)}
+.ad-warn{background:var(--red-soft);border:.5px solid var(--red-border);border-radius:var(--rs);padding:12px;margin-bottom:14px}
+.ad-warn-title{font-size:12px;font-weight:600;color:var(--red);margin-bottom:5px}
+.ad-warn-body{font-size:12px;color:var(--text2);line-height:1.5}
+.ad-acts{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ─ Boot ─ */
+.tab-nav{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap}
+.tbtn{padding:7px 14px;border:.5px solid var(--border);border-radius:var(--rs);background:none;color:var(--text2);font-size:13px;cursor:pointer;transition:.12s}
+.tbtn.on{background:var(--bg3);color:var(--text);border-color:var(--border2);font-weight:500}
+.debt-card{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px}
+.debt-big{font-size:42px;font-weight:600;margin:8px 0}
+.debt-bar{height:8px;background:var(--bg4);border-radius:4px;overflow:hidden;margin-bottom:8px}
+.debt-fill2{height:100%;border-radius:4px;transition:width .5s}
+.debt-verdict{font-size:13px;padding:8px 12px;border-radius:var(--rs);margin-bottom:14px}
+.dv-safe{background:var(--green-soft);color:var(--green)}
+.dv-warn{background:var(--amber-soft);color:var(--amber)}
+.veh-debt-row{display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg3);border-radius:var(--rs);margin-bottom:6px}
+.vdr-name{flex:1;font-size:12px}
+.vdr-amt{font-size:13px;font-weight:600;color:var(--text3);font-family:var(--mono)}
+.vdr-amt.red{color:var(--red)}
+.pay-lnk{font-size:12px;color:var(--blue);font-weight:500;text-decoration:none}
+.boot-card{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.boot-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.boot-badges{display:flex;gap:6px;flex-wrap:wrap}
+.boot-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:8px}
+.bb-dismissed{background:var(--green-soft);color:var(--green)}
+.bb-illegal{background:var(--red-soft);color:var(--red);border:.5px solid var(--red-border)}
+.boot-date{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.boot-row{display:flex;gap:12px;font-size:12px;margin-bottom:6px}
+.boot-row span{color:var(--text3);width:100px;flex-shrink:0}
+.boot-row strong{color:var(--text);font-weight:500}
+.fee-list{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--text3)}
+.fee-total{color:var(--red);font-weight:600;margin-top:2px}
+.boot-note{font-size:12px;color:var(--green);background:var(--green-soft);padding:8px;border-radius:var(--rs);margin-top:8px}
+.right-card{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:14px;display:flex;gap:12px;margin-bottom:12px}
+.right-ico{font-size:22px;flex-shrink:0}
+.right-title{font-size:13px;font-weight:600;margin-bottom:5px}
+.right-body{font-size:12px;color:var(--text3);line-height:1.6}
+.rlinks{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px}
+.rlnk{font-size:12px;color:var(--blue);font-weight:500;text-decoration:none}
+.chk-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:13px;color:var(--text2)}
+.chk-item input{accent-color:var(--red);flex-shrink:0;margin-top:2px}
+.chk-item label{cursor:pointer;line-height:1.4}
+.empty{text-align:center;padding:40px;color:var(--text3);font-size:14px}
+
+/* ─ Responsive ─ */
+@media(max-width:900px){.dash-grid,.agent-layout,.map-layout{grid-template-columns:1fr}.agent-detail{position:static}}
+@media(max-width:640px){#sidebar{width:54px;min-width:54px}.sb-logo-text,.sb-footer,.sb-section-lbl,.sb-alert,.nav-lbl,.nav-bdg{display:none}}
+</style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-grid"></div>
+  <div class="auth-glow"></div>
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">🛡</div>
+      <div>
+        <div class="auth-logo-name">TicketFighter</div>
+        <div class="auth-logo-sub">NYC Parking Defense Network</div>
+      </div>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab on" onclick="setAuthMode('login')">Sign in</button>
+      <button class="auth-tab" onclick="setAuthMode('signup')">Create account</button>
+    </div>
+    <div id="signup-field" class="field" style="display:none">
+      <label>Full name</label>
+      <input class="inp" type="text" placeholder="Marcus Rivera"/>
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input class="inp" type="email" value="marcus@gmail.com"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input class="inp" type="password" value="••••••••"/>
+    </div>
+    <div id="borough-field" class="field" style="display:none">
+      <label>Your borough</label>
+      <select class="inp"><option>Brooklyn</option><option>Manhattan</option><option>Queens</option><option>The Bronx</option><option>Staten Island</option></select>
+    </div>
+    <button class="btn-primary" onclick="doAuth()" id="auth-btn">Sign in →</button>
+    <div class="auth-stats">
+      <div class="astat"><div class="astat-val">47K+</div><div class="astat-lbl">NYC drivers</div></div>
+      <div class="adiv"></div>
+      <div class="astat"><div class="astat-val">$2.1M</div><div class="astat-lbl">tickets avoided</div></div>
+      <div class="adiv"></div>
+      <div class="astat"><div class="astat-val">68%</div><div class="astat-lbl">dispute win rate</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <aside id="sidebar">
+    <div class="sb-top">
+      <div class="sb-logo">
+        <span class="sb-logo-icon">🛡</span>
+        <div class="sb-logo-text">
+          <span class="sb-logo-name">TicketFighter</span>
+          <span class="sb-badge">NYC</span>
+        </div>
+      </div>
+      <button class="sb-toggle" onclick="toggleSidebar()" id="sb-toggle">◂</button>
+    </div>
+    <div id="sb-alert" class="sb-alert" style="display:none">
+      <div class="sb-alert-dot"></div>
+      <span id="sb-alert-text"></span>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">
+        <div class="sb-section-lbl">Monitor</div>
+        <button class="nav-btn on" onclick="nav('dashboard')" id="nav-dashboard"><span class="nav-icon">⊞</span><span class="nav-lbl">Dashboard</span></button>
+        <button class="nav-btn" onclick="nav('map')" id="nav-map"><span class="nav-icon">◎</span><span class="nav-lbl">Live agent map</span><span class="nav-bdg" id="map-badge" style="display:none">0</span></button>
+      </div>
+      <div class="sb-section">
+        <div class="sb-section-lbl">Fight back</div>
+        <button class="nav-btn" onclick="nav('capture')" id="nav-capture"><span class="nav-icon">⬡</span><span class="nav-lbl">Ticket capture</span></button>
+        <button class="nav-btn" onclick="nav('agents')" id="nav-agents"><span class="nav-icon">◈</span><span class="nav-lbl">Agent profiles</span></button>
+        <button class="nav-btn" onclick="nav('boot')" id="nav-boot"><span class="nav-icon">⬢</span><span class="nav-lbl">Boot defense</span></button>
+      </div>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-vcard">
+        <div class="sb-vdot"></div>
+        <div><div class="sb-vname">Honda Civic — At risk</div><div class="sb-vsub">ASP ends 9:30 AM</div></div>
+      </div>
+      <div class="sb-user">
+        <div class="sb-avatar">MR</div>
+        <div><div class="sb-uname">Marcus Rivera</div><div class="sb-uplan">Guardian Plan</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <main id="main">
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="dash" style="display:none">
+      <div class="dash-hdr">
+        <div>
+          <h1 class="dash-greet" id="greeting">Good morning, Marcus</h1>
+          <p class="dash-date" id="dateline"></p>
+        </div>
+        <div class="dash-hdr-r">
+          <button class="btn btn-out" onclick="nav('capture')">+ Capture ticket</button>
+          <button class="btn btn-red" onclick="nav('map')">◎ Report agent</button>
+        </div>
+      </div>
+      <div id="alert-area"></div>
+      <div class="dash-grid">
+        <div class="dash-col">
+          <!-- Mini map -->
+          <div class="card" style="padding:16px">
+            <div class="card-hdr"><span class="card-title">◎ Live agent map — Fort Greene, Brooklyn</span><button class="card-link" onclick="nav('map')">Expand →</button></div>
+            <div class="map-wrap">
+              <svg width="100%" viewBox="0 0 560 210" id="mini-map-svg">
+                <rect width="560" height="210" fill="#12151a"/>
+                <line x1="112" y1="0" x2="112" y2="210" stroke="rgba(255,255,255,.04)" stroke-width=".5"/>
+                <line x1="224" y1="0" x2="224" y2="210" stroke="rgba(255,255,255,.04)" stroke-width=".5"/>
+                <line x1="336" y1="0" x2="336" y2="210" stroke="rgba(255,255,255,.04)" stroke-width=".5"/>
+                <line x1="448" y1="0" x2="448" y2="210" stroke="rgba(255,255,255,.04)" stroke-width=".5"/>
+                <line x1="0" y1="42" x2="560" y2="42" stroke="rgba(255,255,255,.04)" stroke-width=".5"/>
+                <line x1="0" y1="84" x2="560" y2="84" stroke="rgba(255,255,255,.04)" stroke-width=".5"/>
+                <line x1="0" y1="126" x2="560" y2="126" stroke="rgba(255,255,255,.04)" stroke-width=".5"/>
+                <line x1="0" y1="168" x2="560" y2="168" stroke="rgba(255,255,255,.04)" stroke-width=".5"/>
+                <rect x="28" y="10" rx="2" width="72" height="25" fill="#1a1e24" opacity=".5"/>
+                <rect x="123" y="10" rx="2" width="84" height="25" fill="#1a1e24" opacity=".5"/>
+                <rect x="235" y="10" rx="2" width="72" height="25" fill="#1a1e24" opacity=".5"/>
+                <rect x="28" y="53" rx="2" width="72" height="25" fill="#1a1e24" opacity=".5"/>
+                <rect x="123" y="53" rx="2" width="84" height="25" fill="#1a1e24" opacity=".5"/>
+                <rect x="348" y="53" rx="2" width="72" height="25" fill="#1a1e24" opacity=".5"/>
+                <rect x="28" y="95" rx="2" width="72" height="25" fill="#1a1e24" opacity=".5"/>
+                <rect x="235" y="95" rx="2" width="84" height="25" fill="#1a1e24" opacity=".5"/>
+                <rect x="348" y="95" rx="2" width="72" height="25" fill="#1a1e24" opacity=".5"/>
+                <rect x="28" y="137" rx="2" width="72" height="25" fill="#1a1e24" opacity=".5"/>
+                <rect x="123" y="137" rx="2" width="84" height="25" fill="#1a1e24" opacity=".5"/>
+                <rect x="235" y="137" rx="2" width="72" height="25" fill="#1a1e24" opacity=".5"/>
+                <!-- Your vehicles -->
+                <rect x="195" y="80" width="10" height="10" rx="2" fill="#e24b4a"/>
+                <rect x="360" y="145" width="10" height="10" rx="2" fill="#4a8fd4"/>
+                <!-- Agent dots -->
+                <g id="mini-dots"></g>
+              </svg>
+              <div class="map-legend">
+                <div class="leg-item"><span class="leg-dot" style="background:var(--red)"></span><span>Traffic agent</span></div>
+                <div class="leg-item"><span class="leg-dot" style="background:var(--amber)"></span><span>Marshal</span></div>
+                <div class="leg-item"><span class="leg-dot" style="background:var(--blue);border-radius:2px"></span><span>Your car</span></div>
+              </div>
+            </div>
+          </div>
+          <!-- Vehicles -->
+          <div class="card">
+            <div class="card-hdr"><span class="card-title">◈ My vehicles</span><button class="card-link" onclick="nav('capture')">+ Add vehicle</button></div>
+            <div class="veh-row high">
+              <div class="veh-icon">🚗</div>
+              <div class="veh-info">
+                <div class="veh-name">Honda Civic<span class="veh-plate">NYP 4821</span></div>
+                <div class="veh-loc">📍 DeKalb Ave, Fort Greene</div>
+                <div class="veh-warn">ASP today 8:00–9:30 AM — move by then</div>
+                <div class="veh-debt">⚠ $45 outstanding debt</div>
+              </div>
+              <span class="risk-tag risk-high">At risk</span>
+            </div>
+            <div class="veh-row">
+              <div class="veh-icon">🚗</div>
+              <div class="veh-info">
+                <div class="veh-name">Toyota RAV4<span class="veh-plate">NYK 3310</span></div>
+                <div class="veh-loc">📍 Flatbush Ave, Park Slope</div>
+              </div>
+              <span class="risk-tag risk-low">Safe</span>
+            </div>
+          </div>
+          <!-- ASP -->
+          <div class="card">
+            <div class="card-hdr"><span class="card-title">⬡ Street cleaning — this week</span><span style="font-size:12px;color:var(--text3)">DeKalb Ave N side</span></div>
+            <div class="asp-row passed"><span class="asp-day">Mon</span><div class="asp-bar-wrap"><div class="asp-bar" style="background:var(--green)"></div></div><span class="asp-time">8:00–9:30 AM</span><span style="font-size:13px;color:var(--text3);margin-left:4px">✓</span></div>
+            <div class="asp-row today"><span class="asp-day">Thu</span><div class="asp-bar-wrap"><div class="asp-bar" style="background:var(--red)"></div></div><span class="asp-time">8:00–9:30 AM ⚠</span><span style="font-size:13px;color:var(--red);margin-left:4px">●</span></div>
+            <div class="asp-row"><span class="asp-day">Fri</span><div class="asp-bar-wrap"><div class="asp-bar" style="background:var(--text3)"></div></div><span class="asp-time">11:30 AM–1:00 PM</span><span style="font-size:13px;color:var(--text3);margin-left:4px">·</span></div>
+            <div class="asp-sus">
+              <div class="asp-sus-lbl">Upcoming suspensions</div>
+              <div class="sus-row"><span>🎉</span><span class="sus-name">Juneteenth</span><span class="sus-date">Jun 19 · in 13 days</span></div>
+              <div class="sus-row"><span>🎉</span><span class="sus-name">Independence Day</span><span class="sus-date">Jul 4 · in 28 days</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="dash-col">
+          <!-- Stats -->
+          <div class="card">
+            <div class="card-hdr"><span class="card-title">↗ Your stats</span></div>
+            <div class="stats-grid">
+              <div class="stat-card"><div class="stat-icon">🛡</div><div class="stat-val">14</div><div class="stat-lbl">Tickets avoided</div><div class="stat-sub">since Jan 2025</div></div>
+              <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-val">$630</div><div class="stat-lbl">Money saved</div><div class="stat-sub">at $45 avg</div></div>
+              <div class="stat-card"><div class="stat-icon">◎</div><div class="stat-val">8</div><div class="stat-lbl">Agent reports</div><div class="stat-sub">you submitted</div></div>
+              <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-val">#42</div><div class="stat-lbl">Community rank</div><div class="stat-sub">Brooklyn</div></div>
+            </div>
+          </div>
+          <!-- Debt meter -->
+          <div class="card">
+            <div class="card-hdr"><span class="card-title">⬢ Boot risk meter</span><span class="risk-tag risk-low">Safe</span></div>
+            <div><span class="debt-val">$45</span><span class="debt-of"> / $350 boot threshold</span></div>
+            <div class="debt-track"><div class="debt-fill" style="width:13%;background:var(--green)"></div></div>
+            <div class="debt-note">✓ You're $305 below the $350 boot threshold. Keep it up.</div>
+          </div>
+          <!-- Activity -->
+          <div class="card">
+            <div class="card-hdr"><span class="card-title">◈ Recent activity</span></div>
+            <ol class="act-list">
+              <li class="act-item"><div class="act-ico ico-alert">⚠</div><div><p class="act-text">Agent alert sent — 3 users reported agent on DeKalb Ave near your Civic.</p><time class="act-time">4 min ago</time></div></li>
+              <li class="act-item"><div class="act-ico ico-ok">✓</div><div><p class="act-text">Ticket dismissed — May 28 ticket ($45) dismissed. Reason: sign obstruction.</p><time class="act-time">2 days ago</time></div></li>
+              <li class="act-item"><div class="act-ico ico-rep">◎</div><div><p class="act-text">You reported an agent on Myrtle Ave. Helped 6 neighbors move their cars.</p><time class="act-time">5 days ago</time></div></li>
+              <li class="act-item"><div class="act-ico ico-boot">⬢</div><div><p class="act-text">Boot dismissed — Illegal boot on RAV4 (below $350 threshold) dismissed.</p><time class="act-time">7 weeks ago</time></div></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map page -->
+    <div id="page-map" class="page" style="display:none">
+      <div class="view-hdr">
+        <div><h1 class="view-title">◎ Live agent map</h1><p class="view-sub" id="map-sub">Fort Greene & surrounding · 3 active sightings</p></div>
+        <div class="view-hdr-r">
+          <div class="filter-row">
+            <button class="ftab on" onclick="setFilter('all',this)">All</button>
+            <button class="ftab" onclick="setFilter('traffic',this)">🚨 Traffic</button>
+            <button class="ftab" onclick="setFilter('marshal',this)">🔒 Marshals</button>
+          </div>
+          <button class="btn btn-red" onclick="openReportModal()">+ Report sighting</button>
+        </div>
+      </div>
+      <div id="report-ok" class="banner-ok" style="display:none">✓ Sighting reported! Your neighbors have been notified. +5 community points.</div>
+      <div class="map-layout">
+        <div class="map-full">
+          <svg width="100%" viewBox="0 0 640 380" id="full-map-svg">
+            <rect width="640" height="380" fill="#12151a"/>
+            <line x1="0" y1="57" x2="640" y2="57" stroke="#1e2228" stroke-width="6" stroke-linecap="round"/>
+            <line x1="0" y1="114" x2="640" y2="114" stroke="#1e2228" stroke-width="6" stroke-linecap="round"/>
+            <line x1="0" y1="171" x2="640" y2="171" stroke="#1e2228" stroke-width="6" stroke-linecap="round"/>
+            <line x1="0" y1="228" x2="640" y2="228" stroke="#1e2228" stroke-width="6" stroke-linecap="round"/>
+            <line x1="0" y1="285" x2="640" y2="285" stroke="#1e2228" stroke-width="6" stroke-linecap="round"/>
+            <line x1="0" y1="342" x2="640" y2="342" stroke="#1e2228" stroke-width="6" stroke-linecap="round"/>
+            <line x1="77" y1="0" x2="77" y2="380" stroke="#1e2228" stroke-width="6" stroke-linecap="round"/>
+            <line x1="154" y1="0" x2="154" y2="380" stroke="#1e2228" stroke-width="6" stroke-linecap="round"/>
+            <line x1="231" y1="0" x2="231" y2="380" stroke="#1e2228" stroke-width="6" stroke-linecap="round"/>
+            <line x1="333" y1="0" x2="333" y2="380" stroke="#1e2228" stroke-width="6" stroke-linecap="round"/>
+            <line x1="410" y1="0" x2="410" y2="380" stroke="#1e2228" stroke-width="6" stroke-linecap="round"/>
+            <line x1="487" y1="0" x2="487" y2="380" stroke="#1e2228" stroke-width="6" stroke-linecap="round"/>
+            <line x1="564" y1="0" x2="564" y2="380" stroke="#1e2228" stroke-width="6" stroke-linecap="round"/>
+            <rect x="83" y="6" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="160" y="6" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="237" y="6" width="90" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="339" y="6" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="416" y="6" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="83" y="63" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="160" y="63" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="237" y="63" width="90" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="339" y="63" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="416" y="63" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="83" y="120" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="160" y="120" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="237" y="120" width="90" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="339" y="120" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="416" y="120" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="83" y="177" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="160" y="177" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="237" y="177" width="90" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="339" y="177" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="416" y="177" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="83" y="234" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="160" y="234" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="237" y="234" width="90" height="45" rx="3" fill="#1a1e24"/>
+            <rect x="339" y="234" width="65" height="45" rx="3" fill="#1a1e24"/>
+            <!-- Vehicles -->
+            <rect x="264" y="155" width="12" height="12" rx="2" fill="#e24b4a"/>
+            <text x="270" y="180" font-size="9" text-anchor="middle" fill="#4a4e56">NYP 4821</text>
+            <rect x="390" y="240" width="12" height="12" rx="2" fill="#4a8fd4"/>
+            <text x="396" y="265" font-size="9" text-anchor="middle" fill="#4a4e56">NYK 3310</text>
+            <!-- Agent sightings -->
+            <g id="full-map-dots"></g>
+          </svg>
+        </div>
+        <div class="sight-panel">
+          <div class="sight-panel-hdr">Active sightings</div>
+          <div id="sight-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ticket capture -->
+    <div id="page-capture" class="page" style="display:none">
+      <div class="view-hdr"><div><h1 class="view-title">⬡ Ticket capture</h1><p class="view-sub">Document your ticket, build your case, fight back</p></div></div>
+      <div class="stepper" id="stepper">
+        <div class="step-item on" id="step-0"><div class="step-num">1</div><div class="step-lbl">Photograph ticket</div></div>
+        <div class="step-line"></div>
+        <div class="step-item" id="step-1"><div class="step-num">2</div><div class="step-lbl">Photograph sign</div></div>
+        <div class="step-line"></div>
+        <div class="step-item" id="step-2"><div class="step-num">3</div><div class="step-lbl">Confirm details</div></div>
+        <div class="step-line"></div>
+        <div class="step-item" id="step-3"><div class="step-num">4</div><div class="step-lbl">File dispute</div></div>
+      </div>
+      <div class="cap-body" id="cap-body"></div>
+    </div>
+
+    <!-- Agents -->
+    <div id="page-agents" class="page" style="display:none">
+      <div class="view-hdr">
+        <div><h1 class="view-title">◈ Agent profiles</h1><p class="view-sub">3 agents tracked · Community-sourced dismissal data</p></div>
+        <div class="view-hdr-r"><input class="srch" placeholder="Search badge, name, block…" oninput="filterAgents(this.value)"/></div>
+      </div>
+      <div class="agent-layout">
+        <div>
+          <div class="sort-bar">
+            <span class="sort-lbl">Sort by:</span>
+            <button class="sort-btn on" onclick="sortAgents('dismissalRate',this)">Dismissal rate</button>
+            <button class="sort-btn" onclick="sortAgents('totalTicketsIssued',this)">Tickets issued</button>
+            <button class="sort-btn" onclick="sortAgents('complaintsField',this)">Complaints</button>
+          </div>
+          <div id="agent-list"></div>
+        </div>
+        <div id="agent-detail-col"></div>
+      </div>
+    </div>
+
+    <!-- Boot -->
+    <div id="page-boot" class="page" style="display:none">
+      <div class="view-hdr">
+        <div><h1 class="view-title">⬢ Boot defense</h1><p class="view-sub">Track your risk, document incidents, fight illegal boots</p></div>
+        <button class="btn btn-red" onclick="openBootModal()">🔒 My car was booted!</button>
+      </div>
+      <div id="boot-ok" class="banner-ok" style="display:none">✓ Boot documented. Checking if it was legal based on your debt at time of booting.</div>
+      <div class="tab-nav">
+        <button class="tbtn on" onclick="bootTab('status',this)">My debt status</button>
+        <button class="tbtn" onclick="bootTab('history',this)">Boot history</button>
+        <button class="tbtn" onclick="bootTab('rights',this)">Know your rights</button>
+      </div>
+      <div id="boot-body"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Report Modal -->
+<div id="report-modal" class="modal-bg" style="display:none">
+  <div class="modal">
+    <div class="modal-hdr"><h2 class="modal-title">Report agent sighting</h2><button class="modal-x" onclick="closeModal('report-modal')">✕</button></div>
+    <p class="modal-desc">Your report helps neighbors move their cars in time. Location is captured automatically.</p>
+    <div class="modal-lbl">Agent type</div>
+    <button class="agent-type-btn on" onclick="selectType(this,'traffic')"><span class="atype-lbl">🚨 Traffic agent</span><span class="atype-sub">Writing parking tickets</span></button>
+    <button class="agent-type-btn" onclick="selectType(this,'marshal')"><span class="atype-lbl">🔒 City Marshal</span><span class="atype-sub">Placing / checking boots</span></button>
+    <div class="modal-loc">📍 Location: <strong>Current GPS location</strong></div>
+    <div class="modal-acts">
+      <button class="btn btn-out" onclick="closeModal('report-modal')">Cancel</button>
+      <button class="btn btn-red" onclick="submitReport()">Submit report →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Boot Modal -->
+<div id="boot-modal" class="modal-bg" style="display:none">
+  <div class="modal">
+    <div class="modal-hdr"><h2 class="modal-title">🔒 Document your boot</h2><button class="modal-x" onclick="closeModal('boot-modal')">✕</button></div>
+    <div>
+      <div class="chk-item"><input type="checkbox" id="c0"/><label for="c0">📷 Photograph the boot device and window notice</label></div>
+      <div class="chk-item"><input type="checkbox" id="c1"/><label for="c1">📷 Photograph your license plate and vehicle</label></div>
+      <div class="chk-item"><input type="checkbox" id="c2"/><label for="c2">📱 Screenshot your NYC Finance balance RIGHT NOW</label></div>
+      <div class="chk-item"><input type="checkbox" id="c3"/><label for="c3">📝 Note the exact time and marshal badge number</label></div>
+      <div class="chk-item"><input type="checkbox" id="c4"/><label for="c4">📷 Photograph any property damage from the boot</label></div>
+    </div>
+    <div class="field" style="margin-top:12px"><label class="modal-lbl">Your current NYC Finance balance ($)</label><input class="inp" type="number" placeholder="e.g. 310"/></div>
+    <div class="field"><label class="modal-lbl">Marshal badge number (from notice)</label><input class="inp" type="text" placeholder="e.g. MARSHAL-188"/></div>
+    <div class="modal-acts">
+      <button class="btn btn-out" onclick="closeModal('boot-modal')">Cancel</button>
+      <button class="btn btn-red" onclick="submitBoot()">Document & check legality →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Data ─────────────────────────────────────────────────────
+const SIGHTINGS = [
+  {id:'s1',block:'Myrtle Ave & Vanderbilt',agentType:'traffic',confirmedCount:5,trustScore:.95,expiresMin:33},
+  {id:'s2',block:'Fulton St & S Portland Ave',agentType:'traffic',confirmedCount:2,trustScore:.72,expiresMin:17},
+  {id:'s3',block:'Lafayette Ave & Washington Ave',agentType:'marshal',confirmedCount:1,trustScore:.55,expiresMin:37},
+];
+const MINI_POSITIONS = [{cx:130,cy:65},{cx:280,cy:105},{cx:420,cy:155}];
+const FULL_POSITIONS = [{cx:140,cy:90},{cx:290,cy:200},{cx:460,cy:130},{cx:200,cy:300}];
+const AGENTS = [
+  {id:'a1',badgeNumber:'DOT-4821',fullName:'J. Torres',agency:'DOT',precinctOrUnit:'Brooklyn North',totalTicketsIssued:1847,totalTicketsDisputed:234,totalTicketsDismissed:89,dismissalRate:.38,complaintsField:12,avgTicketsPerDay:18.4,commonPatrolBlocks:['DeKalb Ave','Myrtle Ave','Flushing Ave'],mostActiveHours:'7:30–10:00 AM',verified:true},
+  {id:'a2',badgeNumber:'DOT-2255',fullName:'R. Chen',agency:'DOT',precinctOrUnit:'Brooklyn South',totalTicketsIssued:923,totalTicketsDisputed:67,totalTicketsDismissed:11,dismissalRate:.16,complaintsField:2,avgTicketsPerDay:9.2,commonPatrolBlocks:['Flatbush Ave','Atlantic Ave','4th Ave'],mostActiveHours:'8:00–10:30 AM',verified:true},
+  {id:'a3',badgeNumber:'MARSHAL-188',fullName:'D. Williams',agency:'Marshal',precinctOrUnit:'Kings County',totalTicketsIssued:412,totalTicketsDisputed:88,totalTicketsDismissed:41,dismissalRate:.47,complaintsField:19,avgTicketsPerDay:4.1,commonPatrolBlocks:['Bedford Ave','Nostrand Ave','Rogers Ave'],mostActiveHours:'6:00–9:00 AM',verified:true},
+];
+let filteredAgents = [...AGENTS];
+let selectedAgent = null;
+let currentFilter = 'all';
+let reportType = 'traffic';
+let captureStep = 0;
+let sidebarOpen = true;
+
+// ── Auth ─────────────────────────────────────────────────────
+function setAuthMode(mode) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('on', (i===0&&mode==='login')||(i===1&&mode==='signup')));
+  document.getElementById('signup-field').style.display = mode==='signup'?'flex':'none';
+  document.getElementById('borough-field').style.display = mode==='signup'?'flex':'none';
+  document.getElementById('auth-btn').textContent = mode==='login'?'Sign in →':'Create account →';
+}
+function doAuth() {
+  const btn = document.getElementById('auth-btn');
+  btn.textContent = ''; btn.disabled = true;
+  const sp = document.createElement('div'); sp.style.cssText='width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin:auto';
+  btn.appendChild(sp);
+  setTimeout(() => {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    initApp();
+  }, 1200);
+}
+
+// ── Init ──────────────────────────────────────────────────────
+function initApp() {
+  const h = new Date().getHours();
+  document.getElementById('greeting').textContent = (h<12?'Good morning':h<18?'Good afternoon':'Good evening') + ', Marcus';
+  document.getElementById('dateline').innerHTML = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}) + ' · Brooklyn, NY · <span class="asp-tag">ASP active today</span>';
+  renderMiniDots();
+  renderFullMap();
+  renderSightingList();
+  nav('dashboard');
+  renderCaptureStep();
+  renderAgentList();
+  renderBootStatus();
+  setTimeout(() => {
+    SIGHTINGS.unshift({id:'live1',block:'DeKalb Ave & Ashland Pl',agentType:'traffic',confirmedCount:3,trustScore:.91,expiresMin:45});
+    renderMiniDots(); renderFullMap(); renderSightingList();
+    updateMapBadge();
+    showAlert('Traffic agent spotted 2 blocks from your Civic','DeKalb Ave & Ashland Pl');
+    const sa = document.getElementById('sb-alert');
+    document.getElementById('sb-alert-text').textContent = 'Agent spotted near your Civic';
+    sa.style.display = 'flex';
+  }, 3000);
+}
+
+// ── Navigation ────────────────────────────────────────────────
+function nav(page) {
+  document.querySelectorAll('[id^="page-"]').forEach(p => p.style.display='none');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('page-'+page).style.display = 'block';
+  const nb = document.getElementById('nav-'+page);
+  if(nb) nb.classList.add('on');
+}
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  document.getElementById('sidebar').classList.toggle('closed', !sidebarOpen);
+  document.getElementById('sb-toggle').textContent = sidebarOpen?'◂':'▸';
+}
+function updateMapBadge() {
+  const active = SIGHTINGS.filter(s=>s.active!==false).length;
+  const bdg = document.getElementById('map-badge');
+  bdg.textContent = active; bdg.style.display = active>0?'inline':'none';
+  document.getElementById('map-sub').textContent = `Fort Greene & surrounding · ${active} active sightings`;
+}
+
+// ── Alert ─────────────────────────────────────────────────────
+let alertId = 0;
+function showAlert(msg, loc) {
+  const id = 'alert-' + (++alertId);
+  const area = document.getElementById('alert-area');
+  const div = document.createElement('div');
+  div.className = 'banner-warn'; div.id = id;
+  div.innerHTML = `<span style="font-size:16px;flex-shrink:0">⚠</span><div class="bw-body"><strong class="bw-title">${msg}</strong><span class="bw-loc">${loc}</span></div><button class="bw-act" onclick="nav('map')">View map →</button><button class="bw-x" onclick="document.getElementById('${id}').remove()">✕</button>`;
+  area.appendChild(div);
+}
+
+// ── Map rendering ─────────────────────────────────────────────
+function makeDot(cx, cy, color, r, label, isAnimated) {
+  const pulse = isAnimated ? `<circle cx="${cx}" cy="${cy}" r="${r+7}" fill="${color}" opacity=".13"><animate attributeName="r" values="${r+7};${r+13};${r+7}" dur="2.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".13;.04;.13" dur="2.2s" repeatCount="indefinite"/></circle>` : '';
+  return `${pulse}<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}"/>${label?`<text x="${cx}" y="${cy-r-4}" font-size="9" text-anchor="middle" fill="${color}" font-weight="600">${label}</text>`:''}`;
+}
+function renderMiniDots() {
+  const visible = currentFilter==='all'?SIGHTINGS:SIGHTINGS.filter(s=>s.agentType===currentFilter);
+  let html = '';
+  visible.slice(0,3).forEach((s,i) => {
+    const p = MINI_POSITIONS[i]; const c = s.agentType==='marshal'?'#d4843c':'#e24b4a'; const r = s.trustScore>.8?7:5;
+    html += makeDot(p.cx, p.cy, c, r, `${s.confirmedCount}✓`, true);
+  });
+  document.getElementById('mini-dots').innerHTML = html;
+}
+function renderFullMap() {
+  const visible = currentFilter==='all'?SIGHTINGS:SIGHTINGS.filter(s=>s.agentType===currentFilter);
+  let html = '';
+  visible.forEach((s,i) => {
+    const p = FULL_POSITIONS[i%FULL_POSITIONS.length]; const c = s.agentType==='marshal'?'#d4843c':'#e24b4a'; const r = s.trustScore>.8?9:7;
+    html += makeDot(p.cx, p.cy, c, r, `${s.confirmedCount}✓`, true);
+    html += `<text x="${p.cx}" y="${p.cy+r+12}" font-size="8" text-anchor="middle" fill="#4a4e56">${s.expiresMin}m left</text>`;
+  });
+  document.getElementById('full-map-dots').innerHTML = html;
+}
+function renderSightingList() {
+  const visible = currentFilter==='all'?SIGHTINGS:SIGHTINGS.filter(s=>s.agentType===currentFilter);
+  if(!visible.length){document.getElementById('sight-list').innerHTML='<div class="sight-empty">No active sightings in this area</div>';return;}
+  document.getElementById('sight-list').innerHTML = visible.map(s => `
+    <div class="sight-row">
+      <div class="sdot ${s.agentType}"></div>
+      <div class="sight-info"><div class="sight-block">${s.block}</div><div class="sight-meta">${s.agentType==='marshal'?'🔒 Marshal':'🚨 Traffic'} · ${s.confirmedCount} confirmed · ${s.expiresMin}m left</div></div>
+      <div class="trust-pill ${s.trustScore>.8?'trust-h':'trust-m'}">${Math.round(s.trustScore*100)}%</div>
+    </div>`).join('');
+  updateMapBadge();
+}
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderFullMap(); renderSightingList(); renderMiniDots();
+}
+
+// ── Report ────────────────────────────────────────────────────
+function openReportModal(){document.getElementById('report-modal').style.display='flex'}
+function closeModal(id){document.getElementById(id).style.display='none'}
+function selectType(btn,type){
+  reportType=type;
+  document.querySelectorAll('.agent-type-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+function submitReport(){
+  SIGHTINGS.unshift({id:'user-'+Date.now(),block:'Your current location',agentType:reportType,confirmedCount:1,trustScore:.5,expiresMin:45});
+  closeModal('report-modal');
+  const ok=document.getElementById('report-ok');ok.style.display='block';setTimeout(()=>ok.style.display='none',4000);
+  renderFullMap();renderSightingList();renderMiniDots();
+}
+
+// ── Ticket Capture ────────────────────────────────────────────
+function setStep(n){
+  captureStep=n;
+  [0,1,2,3].forEach(i=>{
+    const el=document.getElementById('step-'+i);
+    el.classList.remove('on','done');
+    if(i===n)el.classList.add('on');
+    else if(i<n)el.classList.add('done');
+    const num=el.querySelector('.step-num');
+    num.textContent=i<n?'✓':(i+1);
+  });
+  renderCaptureStep();
+}
+function renderCaptureStep(){
+  const body=document.getElementById('cap-body');
+  if(captureStep===0){
+    body.innerHTML=`<div class="cap-title">Photograph the ticket</div><p class="cap-hint">Take a clear photo of the front of your ticket. OCR will auto-extract the agent name, badge number, violation code, and plate — no typing needed.</p><label class="drop-zone"><input type="file" accept="image/*" style="display:none" onchange="setStep(1)"/><div class="drop-icon">📷</div><div class="drop-text">Tap to photograph ticket</div><div class="drop-sub">or drag & drop image here</div></label><button class="btn btn-out" style="width:100%;margin-top:12px;justify-content:center" onclick="setStep(1)">Demo: skip photo →</button>`;
+  } else if(captureStep===1){
+    body.innerHTML=`<div class="cap-title">Photograph the street sign</div><p class="cap-hint">Get a clear shot of the ASP sign on your block. If it's obstructed, damaged, or missing — that's your strongest defense argument.</p><label class="drop-zone"><input type="file" accept="image/*" style="display:none" onchange="runOcr()"/><div class="drop-icon">🪧</div><div class="drop-text">Tap to photograph sign</div><div class="drop-sub">Show any obstruction clearly</div></label><div class="sign-tip">✓ Include the full sign and any obstruction</div><div class="sign-tip">✓ Include the street corner for context</div><button class="btn btn-out" style="width:100%;margin-top:12px;justify-content:center" onclick="runOcr()">Demo: skip sign photo →</button>`;
+  } else if(captureStep===2){
+    body.innerHTML=`<div class="ocr-banner">✨ OCR extracted — confirm or correct the details below</div><div class="ocr-grid"><div class="ocr-field"><label>Summons #</label><input class="inp" value="8734-0012-9988"/></div><div class="ocr-field"><label>Violation</label><input class="inp" value="37 — Street cleaning"/></div><div class="ocr-field"><label>Amount due</label><input class="inp" value="$45"/></div><div class="ocr-field"><label>Issued at</label><input class="inp" value="06/05/2025 08:51"/></div><div class="ocr-field"><label>Location</label><input class="inp" value="DeKalb Ave bet. Ashland & St. Felix"/></div><div class="ocr-field"><label>Plate</label><input class="inp" value="NYP 4821"/></div></div><div class="agent-match"><div class="match-hdr">◈ Agent matched in database</div><div class="match-name">J. Torres · DOT-4821</div><div class="match-stats"><span class="dr-pill">38% dismissal rate</span><span class="match-stat">1,847 tickets issued</span><span class="match-stat">12 complaints</span></div><div class="match-warn">⚠ Unusually high dismissal rate — strong grounds for dispute</div></div><label class="flag-check"><input type="checkbox" checked/> Sign obstruction noted in photo</label><label class="flag-check"><input type="checkbox"/> Sign missing or damaged</label><label class="flag-check"><input type="checkbox"/> Wrong plate on ticket</label><button class="btn btn-red" style="width:100%;margin-top:16px;justify-content:center" id="gen-btn" onclick="genLetter()">Generate dispute letter →</button>`;
+  } else {
+    const letter=`Re: Summons #8734-0012-9988 — Request for Dismissal\n\nTo: NYC Department of Finance\nDate: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}\n\nDear Adjudicator,\n\nI am writing to contest summons #8734-0012-9988 issued on 06/05/2025 08:51 by Agent J. Torres (Badge DOT-4821) for Violation Code 37 at DeKalb Ave bet. Ashland & St. Felix.\n\nGrounds for dismissal:\n1. SIGN OBSTRUCTION — The posted street cleaning sign was partially obstructed by an overhanging branch, making the regulation unclear to a reasonable motorist. Photographic evidence attached.\n2. AGENT RECORD — Badge DOT-4821 has a documented 38% dismissal rate on street cleaning violations in Brooklyn North, indicating a pattern of questionable enforcement.\n\nI respectfully request that this summons be dismissed. Time-stamped photographs of both the ticket and the street sign are enclosed.\n\nRespectfully,\nMarcus Rivera\nPlate: NYP 4821`;
+    body.innerHTML=`<div class="banner-ok">✓ Dispute letter generated — review and submit to NYC DOF</div><div class="letter-box"><pre class="letter-text">${letter}</pre></div><div class="letter-acts"><button class="btn btn-out" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.querySelector('.letter-text').textContent)">⎘ Copy</button><a class="btn btn-red" href="https://www.nyc.gov/site/finance/pay/hearings.page" target="_blank" rel="noopener noreferrer">File hearing at NYC DOF →</a></div><div class="letter-note">Your evidence is saved. If 5+ tickets match this agent's pattern, you'll be notified of a potential class action opportunity.</div>`;
+  }
+}
+function runOcr(){
+  const body=document.getElementById('cap-body');
+  body.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">🔍 Extracting ticket data via OCR…</div>';
+  setTimeout(()=>setStep(2),1400);
+}
+function genLetter(){
+  const btn=document.getElementById('gen-btn');
+  btn.textContent='Generating letter…';btn.disabled=true;
+  setTimeout(()=>setStep(3),1800);
+}
+
+// ── Agents ────────────────────────────────────────────────────
+function getRisk(r){return r>=.4?'critical':r>=.25?'high':'low'}
+function renderAgentList(){
+  document.getElementById('agent-list').innerHTML=filteredAgents.map(a=>`
+    <button class="agent-card${selectedAgent===a.id?' on':''}" onclick="selectAgent('${a.id}')">
+      <div class="agent-card-top">
+        <div class="ag-av" style="background:${getRisk(a.dismissalRate)==='critical'?'#2a1010':getRisk(a.dismissalRate)==='high'?'#1f1706':'#071a0f'}">${a.fullName.split(' ').map(n=>n[0]).join('')}</div>
+        <div style="flex:1"><div class="ag-name">${a.fullName}</div><div class="ag-badge">${a.badgeNumber} · ${a.agency}</div></div>
+        <div class="dis-pill dis-${getRisk(a.dismissalRate)}">${Math.round(a.dismissalRate*100)}% dismissed</div>
+      </div>
+      <div class="ag-stats"><span class="ag-stat">${a.totalTicketsIssued.toLocaleString()} tickets</span><span class="ag-stat">${a.complaintsField} complaints</span><span class="ag-stat">${a.mostActiveHours}</span></div>
+    </button>`).join('');
+}
+function selectAgent(id){
+  selectedAgent = selectedAgent===id?null:id;
+  renderAgentList();
+  const col=document.getElementById('agent-detail-col');
+  if(!selectedAgent){col.innerHTML='';return;}
+  const a=AGENTS.find(x=>x.id===id);
+  col.innerHTML=`<div class="agent-detail"><div class="ad-hdr"><div class="ad-av">${a.fullName.split(' ').map(n=>n[0]).join('')}</div><div><div class="ad-name">${a.fullName}</div><div class="ad-sub">${a.badgeNumber} · ${a.agency} · ${a.precinctOrUnit}</div></div>${a.verified?'<span class="verified">✓ Verified</span>':''}</div><div class="ad-stats">${[['Tickets issued',a.totalTicketsIssued.toLocaleString()],['Disputed',a.totalTicketsDisputed],['Dismissed',a.totalTicketsDismissed],['Dismissal rate',Math.round(a.dismissalRate*100)+'%'],['Complaints',a.complaintsField],['Avg/day',a.avgTicketsPerDay]].map(([l,v])=>`<div class="ad-stat"><div class="ad-stat-val">${v}</div><div class="ad-stat-lbl">${l}</div></div>`).join('')}</div><div class="ad-sec"><div class="ad-sec-lbl">Common patrol blocks</div><div class="patrol-tags">${a.commonPatrolBlocks.map(b=>`<span class="ptag">${b}</span>`).join('')}</div></div><div class="ad-sec"><div class="ad-sec-lbl">Most active hours</div><div style="font-size:14px;font-weight:500;font-family:var(--mono)">${a.mostActiveHours}</div></div>${a.dismissalRate>.3?`<div class="ad-warn"><div class="ad-warn-title">⚠ High dismissal rate detected</div><div class="ad-warn-body">This agent has had ${a.totalTicketsDismissed} of ${a.totalTicketsDisputed} disputed tickets dismissed (${Math.round(a.dismissalRate*100)}%). Reference this in your dispute hearing.</div></div>`:''}<div class="ad-acts"><button class="btn btn-out">File complaint</button><button class="btn btn-red" onclick="nav('capture')">Generate dispute letter →</button></div></div>`;
+}
+function filterAgents(q){
+  filteredAgents=AGENTS.filter(a=>a.badgeNumber.toLowerCase().includes(q.toLowerCase())||a.fullName.toLowerCase().includes(q.toLowerCase())||a.commonPatrolBlocks.some(b=>b.toLowerCase().includes(q.toLowerCase())));
+  renderAgentList();
+}
+function sortAgents(field,btn){
+  filteredAgents.sort((a,b)=>b[field]-a[field]);
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderAgentList();
+}
+
+// ── Boot ──────────────────────────────────────────────────────
+function bootTab(tab,btn){
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  if(tab==='status')renderBootStatus();
+  else if(tab==='history')renderBootHistory();
+  else renderBootRights();
+}
+function renderBootStatus(){
+  document.getElementById('boot-body').innerHTML=`<div class="debt-card"><div class="card-title">Outstanding judgment debt</div><div class="debt-big">$45</div><div style="font-size:9px;color:var(--text3);text-align:right;margin-bottom:4px">$350 boot threshold</div><div class="debt-bar"><div class="debt-fill2" style="width:13%;background:var(--green)"></div></div><div class="debt-verdict dv-safe">✓ You're $305 below the $350 boot threshold. No immediate risk.</div><div><div class="veh-debt-row"><span class="vdr-name">🚗 Honda Civic · NYP 4821</span><span class="vdr-amt red">$45</span><a class="pay-lnk" href="https://www.nyc.gov/site/finance/pay/pay.page" target="_blank">Pay now →</a></div><div class="veh-debt-row"><span class="vdr-name">🚗 Toyota RAV4 · NYK 3310</span><span class="vdr-amt">$0</span></div></div></div>`;
+}
+function renderBootHistory(){
+  document.getElementById('boot-body').innerHTML=`<div class="boot-card"><div class="boot-hdr"><div class="boot-badges"><span class="boot-badge bb-dismissed">✓ Dismissed</span><span class="boot-badge bb-illegal">⚠ Illegal boot</span></div><span class="boot-date">April 14, 2025</span></div><div class="boot-row"><span>Vehicle</span><strong>NYK 3310</strong></div><div class="boot-row"><span>Location</span><strong>Flatbush Ave & Carroll St</strong></div><div class="boot-row"><span>Marshal</span><strong>D. Williams · MARSHAL-188</strong></div><div class="boot-row"><span>Debt at boot</span><strong>$310 <em style="color:var(--red)">(below $350 threshold)</em></strong></div><div class="boot-row"><span>Fees charged</span><div class="fee-list"><div>Boot fee: $142</div><div>Marshal fee: $80</div><div>Poundage (5%): $15.50</div><div class="fee-total">Total: $547.50</div></div></div><div class="boot-note">Boot placed below $350 threshold — illegal boot, dismissed at DOF hearing</div></div>`;
+}
+function renderBootRights(){
+  const rights=[
+    {i:'⚖',t:'The $350 threshold is hard law',b:'A boot can only legally be placed once you owe $350+ in judgments. If your debt was below that at boot time, the boot is illegal. Screenshot your NYC Finance balance immediately.'},
+    {i:'🏛',t:'You can request a hearing within 1 year',b:'After a boot, you can request a hearing at any NYC DOF Business Center if the underlying judgment is less than one year old.'},
+    {i:'💰',t:'Fees are capped by law',b:'Boot fee: $142. Marshal/sheriff fee: $80. Poundage: 5% of total fines. Anything above these amounts violates NYC Admin Code §20-535.'},
+    {i:'⏱',t:'24 hours to return the boot',b:'After paying, you have 24 hours to return the boot before $25/day late fees apply (max $500). Call immediately if you need more time.'},
+    {i:'📷',t:'Document everything immediately',b:'Photograph the boot, the notice, your plate, and any damage. Screenshot your NYC Finance balance at that exact moment. This is your evidence.'},
+  ];
+  document.getElementById('boot-body').innerHTML=rights.map(r=>`<div class="right-card"><div class="right-ico">${r.i}</div><div><div class="right-title">${r.t}</div><div class="right-body">${r.b}</div></div></div>`).join('')+`<div class="rlinks"><a class="rlnk" href="https://www.nyc.gov/site/finance/vehicles/services-booting-faq.page" target="_blank">NYC DOF booting FAQ →</a><a class="rlnk" href="https://www.nyc.gov/site/dca/businesses/license-checklist-booting-company.page" target="_blank">DCWP booting rules →</a></div>`;
+}
+function openBootModal(){document.getElementById('boot-modal').style.display='flex'}
+function submitBoot(){
+  closeModal('boot-modal');
+  const ok=document.getElementById('boot-ok');ok.style.display='block';setTimeout(()=>ok.style.display='none',5000);
+}
+</script>
+</body>
+</html>
